@@ -1,0 +1,22 @@
+{
+    "deepspeech": {
+        "model" :"/data/output_graph.pbmm",
+        "scorer" :"/data/base.scorer",
+        "beam_width": 1024,
+        "lm_alpha": 0.931289039105002,
+        "lm_beta": 1.1834137581510284
+    },
+    "server": {
+        "http": {
+            "host": "0.0.0.0",
+            "port": 8080,
+            "request_max_size": 2048576
+        }
+    },
+    "log": {
+        "level": [ { 
+            "logger": "deepspeech_server",
+             "level": "DEBUG"
+        } ]
+    }
+}
