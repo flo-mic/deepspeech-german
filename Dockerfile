@@ -1,6 +1,6 @@
 
 # Main image
-FROM alpine:latest
+FROM debian:latest
 
 # Variable to specify if running on GitHub Action or localy (prevent GitHub action resource issues)
 ARG RUNS_ON_GITHUB=false
