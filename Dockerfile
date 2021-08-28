@@ -12,21 +12,21 @@ LABEL maintainer="flo-mic" \
 ENV MIRROR=http://dl-cdn.alpinelinux.org/alpine \
    PS1="$(whoami)@$(hostname):$(pwd)\\$ " \
    HOME="/root" \
-   TERM="xterm"
+   TERM="xterm" \
+   DEBIAN_FRONTEND=noninteractive
 
 # Install image components
 RUN echo "**** install packages ****" && \
-   apt update && \
-   apt install --upgrade -y \
+   apt update -q && \
+   apt install -y \
       bash \
       git \
       nano \
       python3-pip \
       tzdata \
       wget && \
-      \
       # Install S6 Overlay \
-      wget --quiet https://github.com/just-containers/s6-overlay/releases/latest/download/s6-overlay-amd64-installer -O /tmp/s6-overlay-installer \
+      wget --quiet https://github.com/just-containers/s6-overlay/releases/latest/download/s6-overlay-amd64-installer -O /tmp/s6-overlay-installer && \
       echo "**** Install S6 overlay ****" && \
       chmod +x /tmp/s6-overlay-installer && \
       /tmp/s6-overlay-installer / && \
@@ -47,7 +47,10 @@ RUN echo "**** install packages ****" && \
          /root/.cache \
          /root/.cargo \
          /tmp/* \
-         /var/cache/apt/* 
+         /var/cache/apt/*  && \
+      apt clean
+      
+      
 
 # Copy/replace root files
 COPY services.d/ /etc/services.d/
