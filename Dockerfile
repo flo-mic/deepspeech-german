@@ -22,10 +22,7 @@ COPY install.sh /tmp/
 RUN ./tmp/install.sh && rm -rf /tmp/*
 
 # Copy/replace root files
-#COPY root/ /
-
-# Specify mount volumes
-VOLUME /config
+COPY services.d/ /etc/services.d/
 
 # Expose needed ports
 EXPOSE 8080
