@@ -1,8 +1,6 @@
 # Build image
 FROM debian:latest as base
 
-COPY /.tf_configure.bazelrc /.tf_configure.bazelrc
-
 # environment variables
 ENV MIRROR=http://dl-cdn.alpinelinux.org/alpine \
    PS1="$(whoami)@$(hostname):$(pwd)\\$ " \
@@ -43,7 +41,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
          wget \
          zlib1g-dev; \
       update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1 && \
-      update-alternatives --install /usr/bin/python python /usr/bin/python3 1; \
+      update-alternatives --install /usr/bin/python python /usr/bin/python3 1 && \
       # Install pip prerequirements and bazel
       pip3 install sox && \
       pip3 install -U --user pip numpy wheel && \
@@ -58,24 +56,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       git submodule update --init tensorflow/ && \
       git submodule sync kenlm/ && git submodule update --init kenlm/ && \
       # Configure tensorflow for custom cpu without AVX support
+      CPU_COMPILE_FLAGS=$(grep flags -m1 /proc/cpuinfo | cut -d ":" -f 2 | tr '[:upper:]' '[:lower:]' | { read FLAGS; OPT="--copt=-march=native"; for flag in $FLAGS; do case "$flag" in "sse4_1" | "sse4_2" | "ssse3" | "fma" | "cx16" | "popcnt" | "avx" | "avx2") OPT+=" --copt=-m$flag";; esac; done; MODOPT=${OPT//_/\.}; echo "$MODOPT"; }) && \
       cd /DeepSpeech/tensorflow && \
       ./configure && \
-      bazel build \
+      bazel build -c opt ${CPU_COMPILE_FLAGS} //native_client:libdeepspeech.so \
          --workspace_status_command="bash native_client/bazel_workspace_status_cmd.sh" \
          --config=monolithic \
-         -c opt \
-         --copt=-march=native \
-         --copt=-mssse3 \
-         --copt=-mcx16 \
-         --copt=-msse4.1 \
-         --copt=-msse4.2 \
-         --copt=-mpopcnt \
-         //native_client:libdeepspeech.so \
          --verbose_failures \
          --action_env=LD_LIBRARY_PATH=${LD_LIBRARY_PATH} && \
-    cp bazel-bin/native_client/libdeepspeech.so /DeepSpeech/native_client/; \
-    cd /DeepSpeech/native_client && make NUM_PROCESSES=$(nproc) deepspeech ; \
-    cd /DeepSpeech/native_client/python && make NUM_PROCESSES=$(nproc) bindings; 
+      cp bazel-bin/native_client/libdeepspeech.so /DeepSpeech/native_client/ && \
+      cd /DeepSpeech/native_client && make NUM_PROCESSES=$(nproc) deepspeech && \
+      cd /DeepSpeech/native_client/python && make NUM_PROCESSES=$(nproc) bindings
 
 
 
